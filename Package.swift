@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "labyrinth_generator",
-    platforms: [.macOS(.v11)],
+    platforms: [.macOS(.v15)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .executable(
@@ -19,11 +19,23 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
+        .executableTarget(
+            name: "labyrinth_generator",
+            dependencies: ["labyrinth_generator_lib", "raylib"]),
         .target(
             name: "labyrinth_generator_lib"),
         .target(
-            name: "labyrinth_generator",
-            dependencies: ["labyrinth_generator_lib"]),
+            name: "raylib",
+            path: "raylib/build/raylib",
+            linkerSettings: [
+                .linkedLibrary("raylib"),
+                .linkedLibrary("m"),
+                .linkedFramework("Foundation", .when(platforms: [.macOS])),
+                .linkedFramework("CoreGraphics", .when(platforms: [.macOS])),
+                .linkedFramework("AppKit", .when(platforms: [.macOS])),
+                // tell the linker to find the (`.a`) library in this path
+                .unsafeFlags(["-Xlinker", "-Lraylib/build/raylib"]),
+            ]),
         .testTarget(
             name: "labyrinth_generatorTests",
             dependencies: ["labyrinth_generator_lib"]

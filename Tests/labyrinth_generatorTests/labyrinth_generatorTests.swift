@@ -1,6 +1,6 @@
 import Testing
 
-@testable import labyrinth_generator
+@testable import labyrinth_generator_lib
 
 @Test(
     "Any live cell with fewer than one live neighbours dies.",
@@ -35,7 +35,7 @@ func underPopulationCase(board: [[Bool]], checkedPosition: (x: Int, y: Int), exp
 }
 
 @Test(
-    "Any live cell with more than five live neighbours dies.",
+    "Any live cell with more than four live neighbours dies.",
     arguments: [
         (
             // Input

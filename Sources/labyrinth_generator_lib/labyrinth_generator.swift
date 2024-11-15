@@ -48,3 +48,6 @@ func tickCell(_ board: [[Bool]], _ position: (x: Int, y: Int)) -> Bool {
 
     return board[position.y][position.x] && countNeighboor >= 1 && countNeighboor <= 5
 }
+
+// Little dwarf to complete the labyrinth
+// Small png that will dig the rest of the paths of the labyrinth
