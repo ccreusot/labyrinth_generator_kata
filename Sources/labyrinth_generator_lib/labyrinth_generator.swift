@@ -10,9 +10,9 @@
 // Any live cell with one to five live neighbours lives, unchanged, to the next generation.
 // Any dead cell with exactly three live neighbours comes to life.
 
-// Next time: Cell doesn't survive if she have 5 cells
+public typealias Board = [[Bool]]
 
-public func tick(_ board: inout [[Bool]]) -> Bool {
+public func tick(_ board: inout Board) -> Bool {
     var newBoard = copy board
     for (y, row) in board.enumerated() {
         for (x, _) in row.enumerated() {
@@ -23,7 +23,7 @@ public func tick(_ board: inout [[Bool]]) -> Bool {
     return true
 }
 
-func tickCell(_ board: [[Bool]], _ position: (x: Int, y: Int)) -> Bool {
+func tickCell(_ board: Board, _ position: (x: Int, y: Int)) -> Bool {
     let row = board.count
     let column = board[0].count
     var countNeighboor = 0
@@ -49,5 +49,39 @@ func tickCell(_ board: [[Bool]], _ position: (x: Int, y: Int)) -> Bool {
     return board[position.y][position.x] && countNeighboor >= 1 && countNeighboor <= 5
 }
 
-// Little dwarf to complete the labyrinth
-// Small png that will dig the rest of the paths of the labyrinth
+func diggerRun(board: Board, x: Int, y: Int) -> Board {
+    var newBoard = board
+    var dwarfPos = (x: x, y: y)
+    var dwarfVec = (dx: 0, dy: 0)
+
+    while dwarfPos.x + 1 < board[dwarfPos.y].count {
+        // dwarfVec.dx = 1
+
+        if newBoard[dwarfPos.y][dwarfPos.x + 1] {
+
+            if !newBoard[dwarfPos.y + 1][dwarfPos.x] {
+                // dwarfVec.dy = 1
+                dwarfPos.y += 1
+                continue
+            }
+
+            if !newBoard[dwarfPos.y][dwarfPos.x - 1] {
+                // dwarfVec.dx = -1
+                dwarfPos.x -= 1
+                continue
+            }
+
+            if !newBoard[dwarfPos.y - 1][dwarfPos.x] {
+                // dwarfVec.dy = -1
+                dwarfPos.y -= 1
+                continue
+            }
+
+            newBoard[dwarfPos.y][dwarfPos.x + 1].toggle()
+        }
+
+        dwarfPos.x += 1
+    }
+
+    return newBoard
+}

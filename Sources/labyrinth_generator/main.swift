@@ -10,12 +10,8 @@ let sarter = (boardSide - sarterSide) / 2
 
 for y in 0..<boardSide {
     board.append([])
-    for x in 0..<boardSide {
-        //if x >= sarter && x < sarter + sarterSide && y >= sarter && y < sarter + sarterSide {
-        //    board[y].append(Bool.random())
-        //} else {
+    for _ in 0..<boardSide {
         board[y].append(false)
-        //}
     }
 }
 
