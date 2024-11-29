@@ -27,9 +27,13 @@ func printBoard(_ board: [[Bool]]) {
 let white = Color(r: 255, g: 255, b: 255, a: 255)
 let black = Color(r: 0, g: 0, b: 0, a: 255)
 let blue = Color(r: 0, g: 0, b: 255, a: 255)
+let yellow = Color(r: 0, g: 255, b: 255, a: 255)
 
 let cellSize: Int32 = 16
 var runLife = false
+var runDwarf = false
+var dwarfX: Int? = nil
+var dwarfY: Int? = nil
 let windowWidth = Int32(boardSide) * cellSize + cellSize * 2
 let windowHeight = Int32(boardSide) * cellSize + cellSize * 2
 InitWindow(
@@ -40,13 +44,29 @@ SetTargetFPS(8)
 
 let boarder = Rectangle(x: 0.0, y: 0.0, width: Float(windowWidth), height: Float(windowHeight))
 
+// TODO : Show when Cell are still running
 while !WindowShouldClose() {
     if runLife {
         _ = tick(&board)
     }
 
+    if runDwarf, let dwarfX, let dwarfY {
+        board = diggerRun(board: board, x: dwarfX, y: dwarfY)
+        runDwarf = false
+    }
+
     if IsKeyPressed(Int32(raylib.KEY_SPACE.rawValue)) {
         runLife = !runLife
+    }
+
+    if IsKeyPressed(Int32(raylib.KEY_D.rawValue)) {
+        runDwarf = !runDwarf
+        runLife = false
+    }
+
+    if IsMouseButtonPressed(Int32(raylib.MOUSE_BUTTON_RIGHT.rawValue)) {
+        dwarfX = Int(GetMouseX() / cellSize) - 1
+        dwarfY = Int(GetMouseY() / cellSize) - 1
     }
 
     if IsMouseButtonDown(Int32(raylib.MOUSE_BUTTON_LEFT.rawValue)) {
@@ -66,7 +86,11 @@ while !WindowShouldClose() {
         for y in 0..<board.count {
             for x in 0..<board[y].count {
                 //DrawRectangle(int posX, int posY, int width, int height, Color color);
-                if board[y][x] {
+                if dwarfY == y && dwarfX == x {
+                    DrawRectangle(
+                        Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
+                        cellSize, yellow)
+                } else if board[y][x] {
                     DrawRectangle(
                         Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
                         cellSize, black)

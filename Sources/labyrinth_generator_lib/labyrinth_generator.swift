@@ -49,38 +49,41 @@ func tickCell(_ board: Board, _ position: (x: Int, y: Int)) -> Bool {
     return board[position.y][position.x] && countNeighboor >= 1 && countNeighboor <= 5
 }
 
-func diggerRun(board: Board, x: Int, y: Int) -> Board {
+// 1. Try to move in your current direction
+// 2. If you can't, turn to your right and back to (1)
+// 3. If no direction other than the inverted previous direction allow you to move,  dig in  your start direction
+
+public func diggerRun(board: Board, x: Int, y: Int) -> Board {
+    let allDirections = [(dx: 1, dy: 0), (dx: 0, dy: 1), (dx: -1, dy: 0), (dx: 0, dy: -1)]
     var newBoard = board
     var dwarfPos = (x: x, y: y)
-    var dwarfVec = (dx: 0, dy: 0)
+    var visitedPos: [(x: Int, y: Int)] = []
 
     while dwarfPos.x + 1 < board[dwarfPos.y].count {
-        // dwarfVec.dx = 1
+        visitedPos.append(dwarfPos)
 
-        if newBoard[dwarfPos.y][dwarfPos.x + 1] {
-
-            if !newBoard[dwarfPos.y + 1][dwarfPos.x] {
-                // dwarfVec.dy = 1
-                dwarfPos.y += 1
+        var canMove = false
+        for direction in allDirections {
+            let hasBeenVisited = visitedPos.contains { pos in
+                pos.x == dwarfPos.x + direction.dx && pos.y == dwarfPos.y + direction.dy
+            }
+            guard !hasBeenVisited else {
                 continue
             }
 
-            if !newBoard[dwarfPos.y][dwarfPos.x - 1] {
-                // dwarfVec.dx = -1
-                dwarfPos.x -= 1
-                continue
+            if !newBoard[dwarfPos.y + direction.dy][dwarfPos.x + direction.dx] {
+                dwarfPos.x += direction.dx
+                dwarfPos.y += direction.dy
+                canMove = true
+                break
             }
-
-            if !newBoard[dwarfPos.y - 1][dwarfPos.x] {
-                // dwarfVec.dy = -1
-                dwarfPos.y -= 1
-                continue
-            }
-
-            newBoard[dwarfPos.y][dwarfPos.x + 1].toggle()
         }
 
-        dwarfPos.x += 1
+        if !canMove {
+            // Dig right
+            newBoard[dwarfPos.y][dwarfPos.x + 1].toggle()
+            dwarfPos.x += 1
+        }
     }
 
     return newBoard
