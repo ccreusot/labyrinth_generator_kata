@@ -3,7 +3,7 @@ import labyrinth_generator_lib
 import raylib
 
 var board: [[Bool]] = []
-let boardSide = 10
+let boardSide = 50
 let sarterSide = 4
 
 let sarter = (boardSide - sarterSide) / 2

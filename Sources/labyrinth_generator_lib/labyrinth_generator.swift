@@ -98,6 +98,7 @@ public func diggerRun(board: Board, x: Int, y: Int) -> (Board, [Point]) {
                 canMove = true
                 break
             }
+            directionIndex = (directionIndex + 1) % allDirections.count
         } while directionIndex != startDirection
 
         if !canMove {
