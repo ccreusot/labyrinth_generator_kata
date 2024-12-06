@@ -144,7 +144,7 @@ func cellBirth(board: [[Bool]], checkedPosition: (x: Int, y: Int), expectedState
     "When we send a the digger inside the labyrinth it try to follow the path",
     arguments: [
         (
-            (x: 0, y: 1),
+            (x: 1, y: 1),
             // Input
             [
                 [true, true, true, true, true],
@@ -159,7 +159,7 @@ func cellBirth(board: [[Bool]], checkedPosition: (x: Int, y: Int), expectedState
             ]
         ),
         (
-            (x: 0, y: 1),
+            (x: 1, y: 1),
             // Input
             [
                 [true, true, true, true, true],
@@ -176,7 +176,7 @@ func cellBirth(board: [[Bool]], checkedPosition: (x: Int, y: Int), expectedState
             ]
         ),
         (
-            (x: 0, y: 2),
+            (x: 1, y: 2),
             // Input
             [
                 [true, true, true, true, true],
@@ -193,7 +193,7 @@ func cellBirth(board: [[Bool]], checkedPosition: (x: Int, y: Int), expectedState
             ]
         ),
         (
-            (x: 0, y: 2),
+            (x: 1, y: 2),
             // Input
             [
                 [true, true, true, true, true],
@@ -203,13 +203,13 @@ func cellBirth(board: [[Bool]], checkedPosition: (x: Int, y: Int), expectedState
             ],
             // Expect
             [
-                [true, true, true, true, true],
-                [true, true, false, false, false],
+                [true, true, false, true, true],
+                [true, true, false, true, true],
                 [false, false, false, true, true],
                 [true, true, true, true, true],
             ]
         ),
     ])
 func digger(startPos: (x: Int, y: Int), board: Board, expect: Board) {
-    #expect(diggerRun(board: board, x: startPos.x, y: startPos.y) == expect)
+    #expect(diggerRun(board: board, x: startPos.x, y: startPos.y).0 == expect)
 }

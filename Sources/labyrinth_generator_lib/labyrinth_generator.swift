@@ -11,6 +11,8 @@
 // Any dead cell with exactly three live neighbours comes to life.
 
 public typealias Board = [[Bool]]
+public typealias Point = (x: Int, y: Int)
+public typealias Direction = (dx: Int, dy: Int)
 
 public func tick(_ board: inout Board) -> Bool {
     var newBoard = copy board
@@ -52,22 +54,41 @@ func tickCell(_ board: Board, _ position: (x: Int, y: Int)) -> Bool {
 // 1. Try to move in your current direction
 // 2. If you can't, turn to your right and back to (1)
 // 3. If no direction other than the inverted previous direction allow you to move,  dig in  your start direction
+func isOnEdge(board: Board, point: Point) -> Bool {
+    return point.x == 0
+        || point.y == 0
+        || point.y == board.count - 1
+        || point.x == board[point.y].count - 1
+}
 
-public func diggerRun(board: Board, x: Int, y: Int) -> Board {
+public func diggerRun(board: Board, x: Int, y: Int) -> (Board, [Point]) {
     let allDirections = [(dx: 1, dy: 0), (dx: 0, dy: 1), (dx: -1, dy: 0), (dx: 0, dy: -1)]
     var newBoard = board
     var dwarfPos = (x: x, y: y)
-    var visitedPos: [(x: Int, y: Int)] = []
+    var visitedPos: [Point] = []
+    var directionIndex = 0
 
-    while dwarfPos.x + 1 < board[dwarfPos.y].count {
+    while !isOnEdge(board: board, point: dwarfPos) {
         visitedPos.append(dwarfPos)
+        let startDirection = directionIndex
 
         var canMove = false
-        for direction in allDirections {
+        repeat {
+            let direction = allDirections[directionIndex]
+
+            guard
+                dwarfPos.y + direction.dy < board.count
+                    && dwarfPos.x + direction.dx < board[dwarfPos.y + direction.dy].count
+            else {
+                directionIndex = (directionIndex + 1) % allDirections.count
+                continue
+            }
+
             let hasBeenVisited = visitedPos.contains { pos in
                 pos.x == dwarfPos.x + direction.dx && pos.y == dwarfPos.y + direction.dy
             }
             guard !hasBeenVisited else {
+                directionIndex = (directionIndex + 1) % allDirections.count
                 continue
             }
 
@@ -77,14 +98,15 @@ public func diggerRun(board: Board, x: Int, y: Int) -> Board {
                 canMove = true
                 break
             }
-        }
+        } while directionIndex != startDirection
 
         if !canMove {
-            // Dig right
-            newBoard[dwarfPos.y][dwarfPos.x + 1].toggle()
-            dwarfPos.x += 1
+            let direction = allDirections[directionIndex]
+            newBoard[dwarfPos.y + direction.dy][dwarfPos.x + direction.dx].toggle()
+            dwarfPos.x += direction.dx
+            dwarfPos.y += direction.dy
         }
     }
 
-    return newBoard
+    return (newBoard, visitedPos)
 }
