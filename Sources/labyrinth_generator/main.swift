@@ -71,7 +71,9 @@ while !WindowShouldClose() {
         runDwarf = !runDwarf
     }
 
-    if IsMouseButtonPressed(Int32(raylib.MOUSE_BUTTON_MIDDLE.rawValue)) {
+    if IsMouseButtonPressed(
+        Int32(raylib.MOUSE_BUTTON_MIDDLE.rawValue)) || IsKeyReleased(Int32(raylib.KEY_X.rawValue))
+    {
         dwarfX = Int(GetMouseX() / cellSize) - 1
         dwarfY = Int(GetMouseY() / cellSize) - 1
     }
