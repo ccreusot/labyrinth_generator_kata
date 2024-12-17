@@ -27,7 +27,8 @@ func printBoard(_ board: [[Bool]]) {
 let white = Color(r: 255, g: 255, b: 255, a: 255)
 let black = Color(r: 0, g: 0, b: 0, a: 255)
 let blue = Color(r: 0, g: 0, b: 255, a: 255)
-let yellow = Color(r: 0, g: 255, b: 255, a: 255)
+let red = Color(r: 255, g: 0, b: 0, a: 255)
+let yellow = Color(r: 255, g: 255, b: 0, a: 255)
 let green = Color(r: 50, g: 200, b: 128, a: 255)
 
 let cellSize: Int32 = 16
@@ -48,8 +49,8 @@ func isInBound(position: Point) -> Bool {
 }
 
 let boarder = Rectangle(x: 0.0, y: 0.0, width: Float(windowWidth), height: Float(windowHeight))
-var path: [Point] = []
-// TODO : Show when Cell are still running
+var path: [(pos: Point, hasDug: Bool)] = []
+
 while !WindowShouldClose() {
     if runLife {
         _ = tick(&board)
@@ -68,7 +69,6 @@ while !WindowShouldClose() {
 
     if IsKeyReleased(Int32(raylib.KEY_D.rawValue)) {
         runDwarf = !runDwarf
-        runLife = false
     }
 
     if IsMouseButtonPressed(Int32(raylib.MOUSE_BUTTON_MIDDLE.rawValue)) {
@@ -115,10 +115,19 @@ while !WindowShouldClose() {
             }
         }
 
-        for (x, y) in path {
+        for (index, ((x, y), hasDug)) in path.enumerated() {
+            var fadedRed = red
+            var fadedYellow = yellow
+
+            let alpha = UInt8(200.0 * (Double(index) / Double(path.count)) + 55)
+            fadedRed.a = alpha
+            fadedYellow.a = alpha
             DrawRectangle(
                 Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
-                cellSize, yellow)
+                cellSize, white)
+            DrawRectangle(
+                Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
+                cellSize, hasDug ? fadedRed : fadedYellow)
         }
 
         DrawText("Ticking: \(runLife)", 20, 20, 24, green)

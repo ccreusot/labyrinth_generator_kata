@@ -28,6 +28,12 @@ public func tick(_ board: inout Board) -> Bool {
 func tickCell(_ board: Board, _ position: (x: Int, y: Int)) -> Bool {
     let row = board.count
     let column = board[0].count
+
+    //guard
+    //    position.x != 0 && position.x != column - 1
+    //        && position.y != 0 && position.y != row - 1
+    //else { return true }
+
     var countNeighboor = 0
 
     for y in (position.y - 1)...(position.y + 1) {
@@ -61,15 +67,14 @@ func isOnEdge(board: Board, point: Point) -> Bool {
         || point.x == board[point.y].count - 1
 }
 
-public func diggerRun(board: Board, x: Int, y: Int) -> (Board, [Point]) {
+public func diggerRun(board: Board, x: Int, y: Int) -> (Board, [(pos: Point, hasDug: Bool)]) {
     let allDirections = [(dx: 1, dy: 0), (dx: 0, dy: 1), (dx: -1, dy: 0), (dx: 0, dy: -1)]
     var newBoard = board
     var dwarfPos = (x: x, y: y)
-    var visitedPos: [Point] = []
+    var visitedPos: [(pos: Point, hasDug: Bool)] = []
     var directionIndex = 0
 
     while !isOnEdge(board: board, point: dwarfPos) {
-        visitedPos.append(dwarfPos)
         let startDirection = directionIndex
 
         var canMove = false
@@ -84,7 +89,7 @@ public func diggerRun(board: Board, x: Int, y: Int) -> (Board, [Point]) {
                 continue
             }
 
-            let hasBeenVisited = visitedPos.contains { pos in
+            let hasBeenVisited = visitedPos.contains { (pos, hasDug) in
                 pos.x == dwarfPos.x + direction.dx && pos.y == dwarfPos.y + direction.dy
             }
             guard !hasBeenVisited else {
@@ -103,9 +108,13 @@ public func diggerRun(board: Board, x: Int, y: Int) -> (Board, [Point]) {
 
         if !canMove {
             let direction = allDirections[directionIndex]
-            newBoard[dwarfPos.y + direction.dy][dwarfPos.x + direction.dx].toggle()
+            let isBlockedByWall = newBoard[dwarfPos.y + direction.dy][dwarfPos.x + direction.dx]
+            newBoard[dwarfPos.y + direction.dy][dwarfPos.x + direction.dx] = false
             dwarfPos.x += direction.dx
             dwarfPos.y += direction.dy
+            visitedPos.append((pos: dwarfPos, hasDug: isBlockedByWall))
+        } else {
+            visitedPos.append((pos: dwarfPos, hasDug: false))
         }
     }
 
