@@ -36,10 +36,15 @@ var runLife = false
 var runDwarf = false
 let windowWidth = Int32(boardSide) * cellSize + cellSize * 2
 let windowHeight = Int32(boardSide) * cellSize + cellSize * 2
+
+let generationFPS = 30
+let dwarfFPS = 15
+var currentFrame = 0
+
 InitWindow(
     windowWidth, windowHeight,
     "hello from swift")
-SetTargetFPS(30)
+SetTargetFPS(Int32(generationFPS))
 //HideCursor()
 
 func isInBound(position: Point) -> Bool {
@@ -51,15 +56,16 @@ var path: [(pos: Point, hasDug: Bool)] = []
 var dwarf: Dwarf? = nil
 
 while !WindowShouldClose() {
+    currentFrame = (currentFrame + 1) % generationFPS
     if runLife {
         _ = tick(&board)
     }
 
-    if runDwarf, let dwarf {
-        let newBoard = dwarf.dig(board: board)
+    if runDwarf && (currentFrame % (generationFPS / dwarfFPS)) == 0, let dwarf {
+        let newBoard = dwarf.digOnce(board: board)
         board = newBoard
         path = dwarf.visitedPositions
-        runDwarf = false
+        //runDwarf = false
     }
 
     if IsKeyReleased(Int32(raylib.KEY_SPACE.rawValue)) {
@@ -111,7 +117,7 @@ while !WindowShouldClose() {
                 if let dwarf, dwarf.position.y == y && dwarf.position.x == x {
                     DrawRectangle(
                         Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
-                        cellSize, yellow)
+                        cellSize, green)
                 } else if board[y][x] {
                     DrawRectangle(
                         Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
@@ -121,15 +127,21 @@ while !WindowShouldClose() {
         }
 
         for (index, ((x, y), hasDug)) in path.enumerated() {
+            guard index != path.count - 1 else {
+                DrawRectangle(
+                    Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
+                    cellSize, green)
+                return
+            }
             var fadedRed = red
             var fadedYellow = yellow
 
-            let alpha = UInt8(200.0 * (Double(index) / Double(path.count)) + 55)
-            fadedRed.a = alpha
-            fadedYellow.a = alpha
-            DrawRectangle(
-                Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
-                cellSize, white)
+            //let alpha = UInt8(200.0 * (Double(index) / Double(path.count)) + 55)
+            //fadedRed.a = alpha
+            //fadedYellow.a = alpha
+            //DrawRectangle(
+            //    Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
+            //    cellSize, white)
             DrawRectangle(
                 Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
                 cellSize, hasDug ? fadedRed : fadedYellow)
