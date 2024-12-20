@@ -34,8 +34,6 @@ let green = Color(r: 50, g: 200, b: 128, a: 255)
 let cellSize: Int32 = 16
 var runLife = false
 var runDwarf = false
-var dwarfX: Int? = nil
-var dwarfY: Int? = nil
 let windowWidth = Int32(boardSide) * cellSize + cellSize * 2
 let windowHeight = Int32(boardSide) * cellSize + cellSize * 2
 InitWindow(
@@ -50,16 +48,17 @@ func isInBound(position: Point) -> Bool {
 
 let boarder = Rectangle(x: 0.0, y: 0.0, width: Float(windowWidth), height: Float(windowHeight))
 var path: [(pos: Point, hasDug: Bool)] = []
+var dwarf: Dwarf? = nil
 
 while !WindowShouldClose() {
     if runLife {
         _ = tick(&board)
     }
 
-    if runDwarf, let dwarfX, let dwarfY {
-        let (newBoard, newPath) = diggerRun(board: board, x: dwarfX, y: dwarfY)
+    if runDwarf, let dwarf {
+        let newBoard = dwarf.dig(board: board)
         board = newBoard
-        path = newPath
+        path = dwarf.visitedPositions
         runDwarf = false
     }
 
@@ -74,8 +73,12 @@ while !WindowShouldClose() {
     if IsMouseButtonPressed(
         Int32(raylib.MOUSE_BUTTON_MIDDLE.rawValue)) || IsKeyReleased(Int32(raylib.KEY_X.rawValue))
     {
-        dwarfX = Int(GetMouseX() / cellSize) - 1
-        dwarfY = Int(GetMouseY() / cellSize) - 1
+        dwarf = Dwarf(
+            position: (
+                x: Int(GetMouseX() / cellSize) - 1,
+                y: Int(GetMouseY() / cellSize) - 1
+            )
+        )
     }
 
     if IsMouseButtonDown(Int32(raylib.MOUSE_BUTTON_LEFT.rawValue)) {
@@ -105,7 +108,7 @@ while !WindowShouldClose() {
         for y in 0..<board.count {
             for x in 0..<board[y].count {
                 //DrawRectangle(int posX, int posY, int width, int height, Color color);
-                if dwarfY == y && dwarfX == x {
+                if let dwarf, dwarf.position.y == y && dwarf.position.x == x {
                     DrawRectangle(
                         Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
                         cellSize, yellow)

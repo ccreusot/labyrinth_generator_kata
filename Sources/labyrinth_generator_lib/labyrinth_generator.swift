@@ -14,6 +14,70 @@ public typealias Board = [[Bool]]
 public typealias Point = (x: Int, y: Int)
 public typealias Direction = (dx: Int, dy: Int)
 
+public final class Dwarf {
+    private let allDirections = [(dx: 1, dy: 0), (dx: 0, dy: 1), (dx: -1, dy: 0), (dx: 0, dy: -1)]
+
+    private var directionIndex = 0
+
+    public private(set) var position: Point
+    public private(set) var visitedPositions: [(pos: Point, hasDug: Bool)]
+
+    public init(position: Point) {
+        self.position = position
+        self.visitedPositions = []  // put origin position in visited positions
+    }
+
+    public func dig(board: Board) -> Board {
+        var newBoard = board
+
+        while !isOnEdge(board: board, point: position) {
+            let startDirection = directionIndex
+
+            var canMove = false
+            repeat {
+                let direction = allDirections[directionIndex]
+
+                guard
+                    position.y + direction.dy < board.count
+                        && position.x + direction.dx < board[position.y + direction.dy].count
+                else {
+                    directionIndex = (directionIndex + 1) % allDirections.count
+                    continue
+                }
+
+                let hasBeenVisited = visitedPositions.contains { (pos, hasDug) in
+                    pos.x == position.x + direction.dx && pos.y == position.y + direction.dy
+                }
+                guard !hasBeenVisited else {
+                    directionIndex = (directionIndex + 1) % allDirections.count
+                    continue
+                }
+
+                if !newBoard[position.y + direction.dy][position.x + direction.dx] {
+                    position.x += direction.dx
+                    position.y += direction.dy
+                    canMove = true
+                    break
+                }
+                directionIndex = (directionIndex + 1) % allDirections.count
+            } while directionIndex != startDirection
+
+            if !canMove {
+                let direction = allDirections[directionIndex]
+                let isBlockedByWall = newBoard[position.y + direction.dy][position.x + direction.dx]
+                newBoard[position.y + direction.dy][position.x + direction.dx] = false
+                position.x += direction.dx
+                position.y += direction.dy
+                visitedPositions.append((pos: position, hasDug: isBlockedByWall))
+            } else {
+                visitedPositions.append((pos: position, hasDug: false))
+            }
+        }
+
+        return newBoard
+    }
+}
+
 public func tick(_ board: inout Board) -> Bool {
     var newBoard = copy board
     for (y, row) in board.enumerated() {

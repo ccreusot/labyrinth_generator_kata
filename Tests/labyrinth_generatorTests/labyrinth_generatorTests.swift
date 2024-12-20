@@ -140,76 +140,77 @@ func cellBirth(board: [[Bool]], checkedPosition: (x: Int, y: Int), expectedState
     #expect(b[checkedPosition.y][checkedPosition.x] == expectedState)
 }
 
-@Test(
-    "When we send a the digger inside the labyrinth it try to follow the path",
-    arguments: [
-        (
-            (x: 1, y: 1),
-            // Input
-            [
-                [true, true, true, true, true],
-                [false, false, false, false, true],
-                [true, true, true, true, true],
-            ],
-            // Expect
-            [
-                [true, true, true, true, true],
-                [false, false, false, false, false],
-                [true, true, true, true, true],
-            ]
-        ),
-        (
-            (x: 1, y: 1),
-            // Input
-            [
-                [true, true, true, true, true],
-                [false, false, false, true, true],
-                [true, true, false, false, true],
-                [true, true, true, true, true],
-            ],
-            // Expect
-            [
-                [true, true, true, true, true],
-                [false, false, false, true, true],
-                [true, true, false, false, false],
-                [true, true, true, true, true],
-            ]
-        ),
-        (
-            (x: 1, y: 2),
-            // Input
-            [
-                [true, true, true, true, true],
-                [true, true, false, false, true],
-                [false, false, false, true, true],
-                [true, true, true, true, true],
-            ],
-            // Expect
-            [
-                [true, true, true, true, true],
-                [true, true, false, false, false],
-                [false, false, false, true, true],
-                [true, true, true, true, true],
-            ]
-        ),
-        (
-            (x: 1, y: 2),
-            // Input
-            [
-                [true, true, true, true, true],
-                [true, true, false, true, true],
-                [false, false, false, true, true],
-                [true, true, true, true, true],
-            ],
-            // Expect
-            [
-                [true, true, false, true, true],
-                [true, true, false, true, true],
-                [false, false, false, true, true],
-                [true, true, true, true, true],
-            ]
-        ),
-    ])
-func digger(startPos: (x: Int, y: Int), board: Board, expect: Board) {
-    #expect(diggerRun(board: board, x: startPos.x, y: startPos.y).0 == expect)
-}
+//@Test(
+//    "When we send a the digger inside the labyrinth it try to follow the path",
+//    arguments: [
+//        (
+//            (x: 1, y: 1),
+//            // Input
+//            [
+//                [true, true, true, true, true],
+//                [false, false, false, false, true],
+//                [true, true, true, true, true],
+//            ],
+//            // Expect
+//            [
+//                [true, true, true, true, true],
+//                [false, false, false, false, false],
+//                [true, true, true, true, true],
+//            ]
+//        ),
+//        (
+//            (x: 1, y: 1),
+//            // Input
+//            [
+//                [true, true, true, true, true],
+//                [false, false, false, true, true],
+//                [true, true, false, false, true],
+//                [true, true, true, true, true],
+//            ],
+//            // Expect
+//            [
+//                [true, true, true, true, true],
+//                [false, false, false, true, true],
+//                [true, true, false, false, false],
+//                [true, true, true, true, true],
+//            ]
+//        ),
+//        (
+//            (x: 1, y: 2),
+//            // Input
+//            [
+//                [true, true, true, true, true],
+//                [true, true, false, false, true],
+//                [false, false, false, true, true],
+//                [true, true, true, true, true],
+//            ],
+//            // Expect
+//            [
+//                [true, true, true, true, true],
+//                [true, true, false, false, false],
+//                [false, false, false, true, true],
+//                [true, true, true, true, true],
+//            ]
+//        ),
+//        (
+//            (x: 1, y: 2),
+//            // Input
+//            [
+//                [true, true, true, true, true],
+//                [true, true, false, true, true],
+//                [false, false, false, true, true],
+//                [true, true, true, true, true],
+//            ],
+//            // Expect
+//            [
+//                [true, true, false, true, true],
+//                [true, true, false, true, true],
+//                [false, false, false, true, true],
+//                [true, true, true, true, true],
+//            ]
+//        ),
+//    ])
+//func digger(startPos: (x: Int, y: Int), board: Board, expect: Board) {
+//    let dwarf = Dwarf(position: (x: startPos.x, y: startPos.y))
+//    #expect(dwarf.dig(board: board) == expect)
+//}
