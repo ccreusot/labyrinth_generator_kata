@@ -2,18 +2,9 @@ import Foundation
 import labyrinth_generator_lib
 import raylib
 
-var board: [[Bool]] = []
-let boardSide = 50
-let sarterSide = 4
-
-let sarter = (boardSide - sarterSide) / 2
-
-for y in 0..<boardSide {
-    board.append([])
-    for _ in 0..<boardSide {
-        board[y].append(false)
-    }
-}
+let boardSide = 100
+let generator = LabyrinthGenerator()
+var board: [[Bool]] = generator.generateLabyrinth(size: boardSide)
 
 func printBoard(_ board: [[Bool]]) {
     for y in 0..<board.count {
@@ -31,7 +22,7 @@ let red = Color(r: 255, g: 0, b: 0, a: 255)
 let yellow = Color(r: 255, g: 255, b: 0, a: 255)
 let green = Color(r: 50, g: 200, b: 128, a: 255)
 
-let cellSize: Int32 = 16
+let cellSize: Int32 = 8
 var runLife = false
 var runDwarf = false
 let windowWidth = Int32(boardSide) * cellSize + cellSize * 2
@@ -52,22 +43,9 @@ func isInBound(position: Point) -> Bool {
 }
 
 let boarder = Rectangle(x: 0.0, y: 0.0, width: Float(windowWidth), height: Float(windowHeight))
-var path: [(pos: Point, hasDug: Bool)] = []
-var dwarf: Dwarf? = nil
+var dwarfs: [Dwarf] = []
 
 while !WindowShouldClose() {
-    currentFrame = (currentFrame + 1) % generationFPS
-    if runLife {
-        _ = tick(&board)
-    }
-
-    if runDwarf && (currentFrame % (generationFPS / dwarfFPS)) == 0, let dwarf {
-        let newBoard = dwarf.digOnce(board: board)
-        board = newBoard
-        path = dwarf.visitedPositions
-        //runDwarf = false
-    }
-
     if IsKeyReleased(Int32(raylib.KEY_SPACE.rawValue)) {
         runLife = !runLife
     }
@@ -76,35 +54,56 @@ while !WindowShouldClose() {
         runDwarf = !runDwarf
     }
 
+    if IsKeyReleased(Int32(raylib.KEY_R.rawValue)) {
+        board = generator.generateLabyrinth(size: boardSide)
+        dwarfs = []
+        runDwarf = false
+        runLife = false
+    }
+
     if IsMouseButtonPressed(
         Int32(raylib.MOUSE_BUTTON_MIDDLE.rawValue)) || IsKeyReleased(Int32(raylib.KEY_X.rawValue))
     {
-        dwarf = Dwarf(
-            position: (
-                x: Int(GetMouseX() / cellSize) - 1,
-                y: Int(GetMouseY() / cellSize) - 1
+        dwarfs.append(
+            Dwarf(
+                position: (
+                    x: Int(GetMouseX() / cellSize) - 1,
+                    y: Int(GetMouseY() / cellSize) - 1
+                )
             )
         )
     }
 
-    if IsMouseButtonDown(Int32(raylib.MOUSE_BUTTON_LEFT.rawValue)) {
-        let x = Int(GetMouseX() / cellSize) - 1
-        let y = Int(GetMouseY() / cellSize) - 1
+    //if IsMouseButtonDown(Int32(raylib.MOUSE_BUTTON_LEFT.rawValue)) {
+    //    let x = Int(GetMouseX() / cellSize) - 1
+    //    let y = Int(GetMouseY() / cellSize) - 1
 
-        if isInBound(position: (x: x, y: y)) {
-            print("click here (x: \(x), y: \(y))")
-            board[y][x] = true
+    //    if isInBound(position: (x: x, y: y)) {
+    //        print("click here (x: \(x), y: \(y))")
+    //        board[y][x] = true
+    //    }
+    //}
+
+    //if IsMouseButtonDown(Int32(raylib.MOUSE_BUTTON_RIGHT.rawValue)) {
+    //    let x = Int(GetMouseX() / cellSize) - 1
+    //    let y = Int(GetMouseY() / cellSize) - 1
+
+    //    if isInBound(position: (x: x, y: y)) {
+    //        print("click here (x: \(x), y: \(y))")
+    //        board[y][x] = false
+    //    }
+    //}
+
+    currentFrame = (currentFrame + 1) % generationFPS
+    //if runLife {
+    //    _ = tick(&board)
+    //}
+
+    if !dwarfs.isEmpty && runDwarf && (currentFrame % (generationFPS / dwarfFPS)) == 0 {
+        for i in 0..<dwarfs.count {
+            board = dwarfs[i].digOnce(board: board)
         }
-    }
-
-    if IsMouseButtonDown(Int32(raylib.MOUSE_BUTTON_RIGHT.rawValue)) {
-        let x = Int(GetMouseX() / cellSize) - 1
-        let y = Int(GetMouseY() / cellSize) - 1
-
-        if isInBound(position: (x: x, y: y)) {
-            print("click here (x: \(x), y: \(y))")
-            board[y][x] = false
-        }
+        //runDwarf = false
     }
 
     BeginDrawing()
@@ -113,38 +112,47 @@ while !WindowShouldClose() {
         DrawRectangleLinesEx(boarder, Float(cellSize), blue)
         for y in 0..<board.count {
             for x in 0..<board[y].count {
-                //DrawRectangle(int posX, int posY, int width, int height, Color color);
-                if let dwarf, dwarf.position.y == y && dwarf.position.x == x {
+                if board[y][x] {
                     DrawRectangle(
-                        Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
-                        cellSize, green)
-                } else if board[y][x] {
-                    DrawRectangle(
-                        Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
+                        Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize,
+                        cellSize,
                         cellSize, black)
                 }
+                //DrawRectangle(int posX, int posY, int width, int height, Color color);
+                for dwarf in dwarfs {
+                    if dwarf.position.y == y && dwarf.position.x == x {
+                        DrawRectangle(
+                            Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize,
+                            cellSize,
+                            cellSize, green)
+                    }
+                }
+
             }
         }
 
-        for (index, ((x, y), hasDug)) in path.enumerated() {
-            guard index != path.count - 1 else {
+        for (dwarfIndex, dwarf) in dwarfs.enumerated() {
+            let path = dwarf.visitedPositions
+            for (index, ((x, y), hasDug)) in path.enumerated() {
+                guard index != path.count - 1 else {
+                    DrawRectangle(
+                        Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
+                        cellSize, green)
+                    break
+                }
+                var fadedRed = red
+                var fadedYellow = yellow
+
+                //let alpha = UInt8(200.0 * (Double(index) / Double(path.count)) + 55)
+                //fadedRed.a = alpha
+                //fadedYellow.a = alpha
+                //DrawRectangle(
+                //    Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
+                //    cellSize, white)
                 DrawRectangle(
                     Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
-                    cellSize, green)
-                return
+                    cellSize, hasDug ? fadedRed : fadedYellow)
             }
-            var fadedRed = red
-            var fadedYellow = yellow
-
-            //let alpha = UInt8(200.0 * (Double(index) / Double(path.count)) + 55)
-            //fadedRed.a = alpha
-            //fadedYellow.a = alpha
-            //DrawRectangle(
-            //    Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
-            //    cellSize, white)
-            DrawRectangle(
-                Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
-                cellSize, hasDug ? fadedRed : fadedYellow)
         }
 
         DrawText("Ticking: \(runLife)", 20, 20, 24, green)

@@ -87,47 +87,101 @@ public final class Dwarf {
     }
 }
 
-public func tick(_ board: inout Board) -> Bool {
-    var newBoard = copy board
-    for (y, row) in board.enumerated() {
-        for (x, _) in row.enumerated() {
-            newBoard[y][x] = tickCell(board, (x, y))
-        }
+public final class LabyrinthGenerator {
+    public init() {
     }
-    board = newBoard
-    return true
-}
 
-func tickCell(_ board: Board, _ position: (x: Int, y: Int)) -> Bool {
-    let row = board.count
-    let column = board[0].count
-
-    //guard
-    //    position.x != 0 && position.x != column - 1
-    //        && position.y != 0 && position.y != row - 1
-    //else { return true }
-
-    var countNeighboor = 0
-
-    for y in (position.y - 1)...(position.y + 1) {
-        guard y >= 0 && y < row else { continue }
-
-        for x in (position.x - 1)...(position.x + 1) {
-            guard x >= 0 && x < column && (y != position.y || x != position.x) else {
-                continue
-            }
-
-            if board[y][x] {
-                countNeighboor += 1
+    private func newBoard(_ size: Int) -> [[Bool]] {
+        var board: [[Bool]] = []
+        for y in 0..<size {
+            board.append([])
+            for _ in 0..<size {
+                board[y].append(false)
             }
         }
+        return board
     }
 
-    if countNeighboor == 3 && !board[position.y][position.x] {
-        return true  // Raise the dead
+    private func tick(_ board: inout Board) -> Bool {
+        var newBoard = copy board
+        var hasChanged = false
+        for (y, row) in board.enumerated() {
+            for (x, _) in row.enumerated() {
+                newBoard[y][x] = tickCell(board, (x, y))
+                hasChanged = hasChanged || board[y][x] != newBoard[y][x]
+            }
+        }
+        board = newBoard
+        return hasChanged
     }
 
-    return board[position.y][position.x] && countNeighboor >= 1 && countNeighboor <= 5
+    private func tickCell(_ board: Board, _ position: (x: Int, y: Int)) -> Bool {
+        let row = board.count
+        let column = board[0].count
+
+        //guard
+        //    position.x != 0 && position.x != column - 1
+        //        && position.y != 0 && position.y != row - 1
+        //else { return true }
+
+        var countNeighboor = 0
+
+        for y in (position.y - 1)...(position.y + 1) {
+            guard y >= 0 && y < row else { continue }
+
+            for x in (position.x - 1)...(position.x + 1) {
+                guard x >= 0 && x < column && (y != position.y || x != position.x) else {
+                    continue
+                }
+
+                if board[y][x] {
+                    countNeighboor += 1
+                }
+            }
+        }
+
+        if countNeighboor == 3 && !board[position.y][position.x] {
+            return true  // Raise the dead
+        }
+
+        return board[position.y][position.x] && countNeighboor >= 1 && countNeighboor <= 5
+    }
+
+    public func generateLabyrinth(size: Int = 50) -> Board {
+        var board = newBoard(size)
+
+        for _ in 0...(size * size / 4) {
+            let x = Int.random(in: 0..<size)
+            let y = Int.random(in: 0..<size)
+
+            board[y][x] = true
+        }
+
+        var historicBoard: [Board] = []
+        historic: while tick(&board) {
+            if !historicBoard.isEmpty {
+                print("historic count: \(historicBoard.count)")
+                for i in 1..<historicBoard.count {
+                    if historicBoard[historicBoard.count - i] == board {
+                        break historic
+                    }
+                }
+            }
+            historicBoard.append(board)
+        }
+
+        for y in 0..<size {
+            board[y][0] = true
+            board[y][size - 1] = true
+        }
+
+        for x in 1..<(size - 1) {
+            board[0][x] = true
+            board[size - 1][x] = true
+        }
+
+        return board
+    }
 }
 
 // 1. Try to move in your current direction
