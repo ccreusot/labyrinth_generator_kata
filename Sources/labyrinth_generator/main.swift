@@ -69,7 +69,8 @@ while !WindowShouldClose() {
                 position: (
                     x: Int(GetMouseX() / cellSize) - 1,
                     y: Int(GetMouseY() / cellSize) - 1
-                )
+                ),
+                direction: [.right, .top, .left, .bottom].randomElement() ?? .right
             )
         )
     }

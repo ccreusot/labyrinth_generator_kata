@@ -12,7 +12,14 @@
 
 public typealias Board = [[Bool]]
 public typealias Point = (x: Int, y: Int)
-public typealias Direction = (dx: Int, dy: Int)
+public typealias Vector = (dx: Int, dy: Int)
+
+public enum Direction: Int {
+    case right = 0
+    case bottom = 1
+    case left = 2
+    case top = 3
+}
 
 public final class Dwarf {
     private let allDirections = [(dx: 1, dy: 0), (dx: 0, dy: 1), (dx: -1, dy: 0), (dx: 0, dy: -1)]
@@ -22,9 +29,10 @@ public final class Dwarf {
     public private(set) var position: Point
     public private(set) var visitedPositions: [(pos: Point, hasDug: Bool)]
 
-    public init(position: Point) {
+    public init(position: Point, direction: Direction = .right) {
         self.position = position
         self.visitedPositions = []  // put origin position in visited positions
+        self.directionIndex = direction.rawValue
     }
 
     public func digOnce(board: Board) -> Board {
@@ -36,14 +44,6 @@ public final class Dwarf {
         var canMove = false
         repeat {
             let direction = allDirections[directionIndex]
-
-            guard
-                position.y + direction.dy < board.count
-                    && position.x + direction.dx < board[position.y + direction.dy].count
-            else {
-                directionIndex = (directionIndex + 1) % allDirections.count
-                continue
-            }
 
             let hasBeenVisited = visitedPositions.contains { (pos, hasDug) in
                 pos.x == position.x + direction.dx && pos.y == position.y + direction.dy
@@ -160,7 +160,6 @@ public final class LabyrinthGenerator {
         var historicBoard: [Board] = []
         historic: while tick(&board) {
             if !historicBoard.isEmpty {
-                print("historic count: \(historicBoard.count)")
                 for i in 1..<historicBoard.count {
                     if historicBoard[historicBoard.count - i] == board {
                         break historic
@@ -180,6 +179,11 @@ public final class LabyrinthGenerator {
             board[size - 1][x] = true
         }
 
+        //let dwarf = Dwarf(
+        //    position: (x: size / 2, y: size / 2),
+        //    direction: [.right, .top, .left, .bottom].randomElement() ?? .right
+        //)
+        //board = dwarf.dig(board: board)
         return board
     }
 }
