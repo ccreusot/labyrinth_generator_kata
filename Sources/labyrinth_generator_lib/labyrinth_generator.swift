@@ -11,8 +11,40 @@
 // Any dead cell with exactly three live neighbours comes to life.
 
 public typealias Board = [[Bool]]
-public typealias Point = (x: Int, y: Int)
 public typealias Vector = (dx: Int, dy: Int)
+
+public struct Point: Equatable, Hashable {
+    public let x: Int
+    public let y: Int
+
+    public init(x: Int, y: Int) {
+        self.x = x
+        self.y = y
+    }
+
+    public func offset(_ offset: Vector) -> Point {
+        return Point(
+            x: x + offset.dx,
+            y: y + offset.dy
+        )
+    }
+}
+
+public struct SquareHistory {
+    public let visitCount: Int
+    public let hasBeenDug: Bool
+
+    init(visitCount: Int = 0, hasBeenDug: Bool = false) {
+        self.visitCount = visitCount
+        self.hasBeenDug = hasBeenDug
+    }
+
+    public var hasBeenVisited: Bool { visitCount > 0 }
+
+    func visit() -> SquareHistory {
+        return SquareHistory(visitCount: visitCount + 1, hasBeenDug: hasBeenDug)
+    }
+}
 
 public enum Direction: Int {
     case right = 0
@@ -27,11 +59,11 @@ public final class Dwarf {
     private var directionIndex = 0
 
     public private(set) var position: Point
-    public private(set) var visitedPositions: [(pos: Point, hasDug: Bool)]
+    public private(set) var visitedPositions: [Point: SquareHistory]
 
     public init(position: Point, direction: Direction = .right) {
         self.position = position
-        self.visitedPositions = []  // put origin position in visited positions
+        self.visitedPositions = [:]  // put origin position in visited positions
         self.directionIndex = direction.rawValue
     }
 
@@ -42,20 +74,32 @@ public final class Dwarf {
         let startDirection = directionIndex
 
         var canMove = false
+        // Regarde devant
+        // Si c'est pas visité et pas un mur avance
+        // Sinon tourne de 90º
+        // ...
+        // Si revenu à la direction de départ
+        // Avant tout droit en cassant le mur si besoin
+        //
+        // Si visité une fois, vas y
+        // Si visité deux fois, tourne et casse un mur
+        //
+        // 1. Pas visité
+        // 2. Visité 1 fois
+        // 3. Un mur à casser
+        // 4. Visité plus d'une fois
         repeat {
             let direction = allDirections[directionIndex]
+            let lookupPosition = position.offset(direction)
+            let history = visitedPositions[lookupPosition] ?? SquareHistory()
 
-            let hasBeenVisited = visitedPositions.contains { (pos, hasDug) in
-                pos.x == position.x + direction.dx && pos.y == position.y + direction.dy
-            }
-            guard !hasBeenVisited else {
+            guard !history.hasBeenVisited else {
                 directionIndex = (directionIndex + 1) % allDirections.count
                 continue
             }
 
-            if !newBoard[position.y + direction.dy][position.x + direction.dx] {
-                position.x += direction.dx
-                position.y += direction.dy
+            if !newBoard[lookupPosition.y][lookupPosition.x] {
+                position = lookupPosition
                 canMove = true
                 break
             }
@@ -65,12 +109,13 @@ public final class Dwarf {
         if !canMove {
             let direction = allDirections[directionIndex]
             let isBlockedByWall = newBoard[position.y + direction.dy][position.x + direction.dx]
-            newBoard[position.y + direction.dy][position.x + direction.dx] = false
-            position.x += direction.dx
-            position.y += direction.dy
-            visitedPositions.append((pos: position, hasDug: isBlockedByWall))
+            let lookupPosition = position.offset(direction)
+            newBoard[lookupPosition.y][lookupPosition.x] = false
+            position = lookupPosition
+            visitedPositions[position] = SquareHistory(visitCount: 1, hasBeenDug: true)
         } else {
-            visitedPositions.append((pos: position, hasDug: false))
+            let history = visitedPositions[position] ?? SquareHistory()
+            visitedPositions[position] = history.visit()
         }
 
         return newBoard
@@ -196,58 +241,4 @@ func isOnEdge(board: Board, point: Point) -> Bool {
         || point.y == 0
         || point.y == board.count - 1
         || point.x == board[point.y].count - 1
-}
-
-public func diggerRun(board: Board, x: Int, y: Int) -> (Board, [(pos: Point, hasDug: Bool)]) {
-    let allDirections = [(dx: 1, dy: 0), (dx: 0, dy: 1), (dx: -1, dy: 0), (dx: 0, dy: -1)]
-    var newBoard = board
-    var dwarfPos = (x: x, y: y)
-    var visitedPos: [(pos: Point, hasDug: Bool)] = []
-    var directionIndex = 0
-
-    while !isOnEdge(board: board, point: dwarfPos) {
-        let startDirection = directionIndex
-
-        var canMove = false
-        repeat {
-            let direction = allDirections[directionIndex]
-
-            guard
-                dwarfPos.y + direction.dy < board.count
-                    && dwarfPos.x + direction.dx < board[dwarfPos.y + direction.dy].count
-            else {
-                directionIndex = (directionIndex + 1) % allDirections.count
-                continue
-            }
-
-            let hasBeenVisited = visitedPos.contains { (pos, hasDug) in
-                pos.x == dwarfPos.x + direction.dx && pos.y == dwarfPos.y + direction.dy
-            }
-            guard !hasBeenVisited else {
-                directionIndex = (directionIndex + 1) % allDirections.count
-                continue
-            }
-
-            if !newBoard[dwarfPos.y + direction.dy][dwarfPos.x + direction.dx] {
-                dwarfPos.x += direction.dx
-                dwarfPos.y += direction.dy
-                canMove = true
-                break
-            }
-            directionIndex = (directionIndex + 1) % allDirections.count
-        } while directionIndex != startDirection
-
-        if !canMove {
-            let direction = allDirections[directionIndex]
-            let isBlockedByWall = newBoard[dwarfPos.y + direction.dy][dwarfPos.x + direction.dx]
-            newBoard[dwarfPos.y + direction.dy][dwarfPos.x + direction.dx] = false
-            dwarfPos.x += direction.dx
-            dwarfPos.y += direction.dy
-            visitedPos.append((pos: dwarfPos, hasDug: isBlockedByWall))
-        } else {
-            visitedPos.append((pos: dwarfPos, hasDug: false))
-        }
-    }
-
-    return (newBoard, visitedPos)
 }

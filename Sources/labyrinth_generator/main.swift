@@ -66,7 +66,7 @@ while !WindowShouldClose() {
     {
         dwarfs.append(
             Dwarf(
-                position: (
+                position: Point(
                     x: Int(GetMouseX() / cellSize) - 1,
                     y: Int(GetMouseY() / cellSize) - 1
                 ),
@@ -134,13 +134,7 @@ while !WindowShouldClose() {
 
         for (dwarfIndex, dwarf) in dwarfs.enumerated() {
             let path = dwarf.visitedPositions
-            for (index, ((x, y), hasDug)) in path.enumerated() {
-                guard index != path.count - 1 else {
-                    DrawRectangle(
-                        Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
-                        cellSize, green)
-                    break
-                }
+            for (position, history) in path {
                 var fadedRed = red
                 var fadedYellow = yellow
 
@@ -151,9 +145,13 @@ while !WindowShouldClose() {
                 //    Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
                 //    cellSize, white)
                 DrawRectangle(
-                    Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
-                    cellSize, hasDug ? fadedRed : fadedYellow)
+                    Int32(position.x) * cellSize + cellSize, Int32(position.y) * cellSize + cellSize, cellSize,
+                    cellSize, history.hasBeenDug ? fadedRed : fadedYellow)
             }
+            DrawRectangle(
+                Int32(dwarf.position.x) * cellSize + cellSize,
+                Int32(dwarf.position.y) * cellSize + cellSize, cellSize,
+                cellSize, green)
         }
 
         DrawText("Ticking: \(runLife)", 20, 20, 24, green)
