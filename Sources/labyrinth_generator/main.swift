@@ -25,6 +25,7 @@ let green = Color(r: 50, g: 200, b: 128, a: 255)
 let cellSize: Int32 = 8
 var runLife = false
 var runDwarf = false
+var hideDwarfPath = false
 let windowWidth = Int32(boardSide) * cellSize + cellSize * 2
 let windowHeight = Int32(boardSide) * cellSize + cellSize * 2
 
@@ -69,10 +70,13 @@ while !WindowShouldClose() {
                 position: Point(
                     x: Int(GetMouseX() / cellSize) - 1,
                     y: Int(GetMouseY() / cellSize) - 1
-                ),
-                direction: [.right, .top, .left, .bottom].randomElement() ?? .right
+                )
             )
         )
+    }
+
+    if IsKeyReleased(Int32(raylib.KEY_H.rawValue)) {
+        hideDwarfPath = !hideDwarfPath
     }
 
     //if IsMouseButtonDown(Int32(raylib.MOUSE_BUTTON_LEFT.rawValue)) {
@@ -132,26 +136,29 @@ while !WindowShouldClose() {
             }
         }
 
-        for (dwarfIndex, dwarf) in dwarfs.enumerated() {
-            let path = dwarf.visitedPositions
-            for (position, history) in path {
-                var fadedRed = red
-                var fadedYellow = yellow
+        if !hideDwarfPath {
+            for (dwarfIndex, dwarf) in dwarfs.enumerated() {
+                let path = dwarf.visitedPositions
+                for (position, history) in path {
+                    var fadedRed = red
+                    var fadedYellow = yellow
 
-                //let alpha = UInt8(200.0 * (Double(index) / Double(path.count)) + 55)
-                //fadedRed.a = alpha
-                //fadedYellow.a = alpha
-                //DrawRectangle(
-                //    Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
-                //    cellSize, white)
+                    //let alpha = UInt8(200.0 * (Double(index) / Double(path.count)) + 55)
+                    //fadedRed.a = alpha
+                    //fadedYellow.a = alpha
+                    //DrawRectangle(
+                    //    Int32(x) * cellSize + cellSize, Int32(y) * cellSize + cellSize, cellSize,
+                    //    cellSize, white)
+                    DrawRectangle(
+                        Int32(position.x) * cellSize + cellSize,
+                        Int32(position.y) * cellSize + cellSize, cellSize,
+                        cellSize, history.hasBeenDug ? fadedRed : fadedYellow)
+                }
                 DrawRectangle(
-                    Int32(position.x) * cellSize + cellSize, Int32(position.y) * cellSize + cellSize, cellSize,
-                    cellSize, history.hasBeenDug ? fadedRed : fadedYellow)
+                    Int32(dwarf.position.x) * cellSize + cellSize,
+                    Int32(dwarf.position.y) * cellSize + cellSize, cellSize,
+                    cellSize, green)
             }
-            DrawRectangle(
-                Int32(dwarf.position.x) * cellSize + cellSize,
-                Int32(dwarf.position.y) * cellSize + cellSize, cellSize,
-                cellSize, green)
         }
 
         DrawText("Ticking: \(runLife)", 20, 20, 24, green)

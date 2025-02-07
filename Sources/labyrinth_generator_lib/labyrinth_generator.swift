@@ -44,6 +44,21 @@ public struct SquareHistory {
     func visit() -> SquareHistory {
         return SquareHistory(visitCount: visitCount + 1, hasBeenDug: hasBeenDug)
     }
+
+    func interestLevel(
+        isWall: Bool, position: Point, offset: Vector, visitedPos: [Point: SquareHistory]
+    )
+        -> Int
+    {
+        if isWall {
+            let behindWallPos =
+                position
+                .offset(offset)
+                .offset(offset)
+            return visitedPos[behindWallPos] != nil ? Int.max : 1
+        }
+        return visitCount
+    }
 }
 
 public enum Direction: Int {
@@ -54,32 +69,41 @@ public enum Direction: Int {
 }
 
 public final class Dwarf {
-    private let allDirections = [(dx: 1, dy: 0), (dx: 0, dy: 1), (dx: -1, dy: 0), (dx: 0, dy: -1)]
+    private let allDirections: [Vector]
 
-    private var directionIndex = 0
+    private var lastPosition: Point?
+
+    private var diggingStrike: Int = 0
+
+    private let maxLastDigAction: Int = 2
+    private var lastDigAction: Int
 
     public private(set) var position: Point
     public private(set) var visitedPositions: [Point: SquareHistory]
 
-    public init(position: Point, direction: Direction = .right) {
+    public init(position: Point) {
         self.position = position
         self.visitedPositions = [:]  // put origin position in visited positions
-        self.directionIndex = direction.rawValue
+        self.lastDigAction = maxLastDigAction
+        self.allDirections = [
+            (dx: 1, dy: 0),
+            (dx: 0, dy: 1),
+            (dx: -1, dy: 0),
+            (dx: 0, dy: -1),
+        ].shuffled()
     }
 
     public func digOnce(board: Board) -> Board {
         guard !isOnEdge(board: board, point: position) else { return board }
 
         var newBoard = board
-        let startDirection = directionIndex
 
-        var canMove = false
         // Regarde devant
         // Si c'est pas visité et pas un mur avance
         // Sinon tourne de 90º
         // ...
         // Si revenu à la direction de départ
-        // Avant tout droit en cassant le mur si besoin
+        // Avance tout droit en cassant le mur si besoin
         //
         // Si visité une fois, vas y
         // Si visité deux fois, tourne et casse un mur
@@ -88,34 +112,57 @@ public final class Dwarf {
         // 2. Visité 1 fois
         // 3. Un mur à casser
         // 4. Visité plus d'une fois
-        repeat {
-            let direction = allDirections[directionIndex]
+        //
+        // sort:
+        // a < b -> a
+        // a > b -> b
+        // a == b && a == last -> b
+        // -> a
+
+        // 1. Select destination
+        var historyTuple = allDirections.map { direction in
             let lookupPosition = position.offset(direction)
-            let history = visitedPositions[lookupPosition] ?? SquareHistory()
-
-            guard !history.hasBeenVisited else {
-                directionIndex = (directionIndex + 1) % allDirections.count
-                continue
+            return (
+                position: lookupPosition,
+                offset: direction,
+                history: visitedPositions[lookupPosition] ?? SquareHistory()
+            )
+        }
+        historyTuple.sort { tupleA, tupleB in
+            let isAWall = board[tupleA.position.y][tupleA.position.x]
+            let isBWall = board[tupleB.position.y][tupleB.position.x]
+            let interestLevelA = tupleA.history.interestLevel(
+                isWall: isAWall, position: position, offset: tupleA.offset,
+                visitedPos: visitedPositions)
+            let interestLevelB = tupleB.history.interestLevel(
+                isWall: isBWall, position: position, offset: tupleB.offset,
+                visitedPos: visitedPositions)
+            if interestLevelA < interestLevelB {
+                return true
+            } else if interestLevelA > interestLevelB {
+                return false
+            } else {
+                return lastPosition == nil || tupleA.position != lastPosition!
             }
+        }
+        let selectedTuple = historyTuple[0]
+        let destination = selectedTuple.position
+        let isBlockedByWall = newBoard[destination.y][destination.x]
 
-            if !newBoard[lookupPosition.y][lookupPosition.x] {
-                position = lookupPosition
-                canMove = true
-                break
-            }
-            directionIndex = (directionIndex + 1) % allDirections.count
-        } while directionIndex != startDirection
+        // 2. Move
+        lastPosition = position
+        position = destination
 
-        if !canMove {
-            let direction = allDirections[directionIndex]
-            let isBlockedByWall = newBoard[position.y + direction.dy][position.x + direction.dx]
-            let lookupPosition = position.offset(direction)
-            newBoard[lookupPosition.y][lookupPosition.x] = false
-            position = lookupPosition
+        // 3. Break wall if needed then update visited position
+        if isBlockedByWall {
+            newBoard[destination.y][destination.x] = false
             visitedPositions[position] = SquareHistory(visitCount: 1, hasBeenDug: true)
+            diggingStrike += 1
+            lastDigAction = 0
         } else {
-            let history = visitedPositions[position] ?? SquareHistory()
-            visitedPositions[position] = history.visit()
+            visitedPositions[position] = selectedTuple.history.visit()
+            diggingStrike = 0
+            lastDigAction = min(maxLastDigAction, lastDigAction + 1)
         }
 
         return newBoard
