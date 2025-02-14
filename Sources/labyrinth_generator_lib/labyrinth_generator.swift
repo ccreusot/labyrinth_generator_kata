@@ -9,6 +9,7 @@
 // Any live cell with more than five live neighbours dies (referred to as overpopulation).
 // Any live cell with one to five live neighbours lives, unchanged, to the next generation.
 // Any dead cell with exactly three live neighbours comes to life.
+import Foundation
 
 public typealias Board = [[Bool]]
 public typealias Vector = (dx: Int, dy: Int)
@@ -137,6 +138,7 @@ public final class Dwarf {
             let interestLevelB = tupleB.history.interestLevel(
                 isWall: isBWall, position: position, offset: tupleB.offset,
                 visitedPos: visitedPositions)
+            // Already
             if interestLevelA < interestLevelB {
                 return true
             } else if interestLevelA > interestLevelB {
@@ -171,7 +173,7 @@ public final class Dwarf {
     public func dig(board: Board) -> Board {
         var newBoard = board
 
-        while !isOnEdge(board: board, point: position) {  // TODO: check edges of ths newBoard
+        while !isOnEdge(board: board, point: position) {
             newBoard = digOnce(board: newBoard)
         }
 
@@ -239,6 +241,26 @@ public final class LabyrinthGenerator {
         return board[position.y][position.x] && countNeighboor >= 1 && countNeighboor <= 5
     }
 
+    private func generateDwarfs(boardSize: Int) -> [Dwarf] {
+        var dwarfs: [Dwarf] = []
+        let factor = 8
+        for y in 1..<factor {
+            let positionY = y * (boardSize / factor)
+            for x in 1..<factor {
+                let positionX = x * (boardSize / factor)
+                dwarfs.append(Dwarf(position: Point(x: positionX, y: positionY)))
+
+            }
+        }
+        return dwarfs
+    }
+
+    private func distance(from point1: Point, to point2: Point) -> Double {
+        let dx = point2.x - point1.x
+        let dy = point2.y - point1.y
+        return Double(dx * dx + dy * dy).squareRoot()
+    }
+
     public func generateLabyrinth(size: Int = 50) -> Board {
         var board = newBoard(size)
 
@@ -271,13 +293,99 @@ public final class LabyrinthGenerator {
             board[size - 1][x] = true
         }
 
-        //let dwarf = Dwarf(
-        //    position: (x: size / 2, y: size / 2),
-        //    direction: [.right, .top, .left, .bottom].randomElement() ?? .right
-        //)
-        //board = dwarf.dig(board: board)
+        let dwarfs = generateDwarfs(boardSize: size)
+        var allDwarfsOnEdge = true
+        repeat {
+            allDwarfsOnEdge = true
+            for dwarf in dwarfs {
+                allDwarfsOnEdge = allDwarfsOnEdge && isOnEdge(board: board, point: dwarf.position)
+                if !isOnEdge(board: board, point: dwarf.position) {
+                    board = dwarf.digOnce(board: board)
+                }
+            }
+        } while !allDwarfsOnEdge
+
+        var exits: [Point] = []
+        // Top
+        for y in 0..<1 {
+            for x in 0..<size {
+                if !board[y][x] {
+                    exits.append(Point(x: x, y: y))
+                }
+
+                board[y][x] = true
+            }
+        }
+
+        // Bottom
+        for y in size - 1..<size {
+            for x in 0..<size {
+                if !board[y][x] {
+                    exits.append(Point(x: x, y: y))
+                }
+
+                board[y][x] = true
+            }
+        }
+
+        // left
+        for x in 0..<1 {
+            for y in 0..<size {
+                if !board[y][x] {
+                    exits.append(Point(x: x, y: y))
+                }
+
+                board[y][x] = true
+            }
+        }
+
+        // right
+        for x in size - 1..<size {
+            for y in 0..<size {
+                if !board[y][x] {
+                    exits.append(Point(x: x, y: y))
+                }
+
+                board[y][x] = true
+            }
+        }
+
+        let first = exits.first!
+        var maxDist = 0.0
+        var farthestPoint = first
+        for point in exits {
+            let curDist = distance(from: first, to: point)
+            if curDist > maxDist {
+                maxDist = curDist
+                farthestPoint = point
+            }
+        }
+
+        board[first.y][first.x] = false
+        board[farthestPoint.y][farthestPoint.x] = false
+
         return board
     }
+}
+
+public func saveBoard(board: [[Bool]], in fileName: String) {
+    let fileManager = FileManager.default
+    if let currentDir = fileManager.currentDirectoryPath as String? {
+        let data = board.map { row in
+            row.map { val in
+                val ? "x" : " "
+            }.joined()
+        }.joined(separator: "\n")
+
+        let filePath = (currentDir as NSString).appendingPathComponent(fileName)
+
+        do {
+            try data.write(toFile: filePath, atomically: true, encoding: .utf8)
+        } catch {
+            print("Unable to write on the file")
+        }
+    }
+
 }
 
 // 1. Try to move in your current direction

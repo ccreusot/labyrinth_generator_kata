@@ -6,6 +6,8 @@ let boardSide = 100
 let generator = LabyrinthGenerator()
 var board: [[Bool]] = generator.generateLabyrinth(size: boardSide)
 
+saveBoard(board: board, in: "labyrinth.txt")
+
 func printBoard(_ board: [[Bool]]) {
     for y in 0..<board.count {
         for x in 0..<board[y].count {
@@ -43,8 +45,22 @@ func isInBound(position: Point) -> Bool {
     return position.x >= 0 && position.x < boardSide && position.y >= 0 && position.y < boardSide
 }
 
+func generateDwarfs() -> [Dwarf] {
+    var dwarfs: [Dwarf] = []
+    let factor = 8
+    for y in 1..<factor {
+        let positionY = y * (boardSide / factor)
+        for x in 1..<factor {
+            let positionX = x * (boardSide / factor)
+            dwarfs.append(Dwarf(position: Point(x: positionX, y: positionY)))
+
+        }
+    }
+    return dwarfs
+}
+
 let boarder = Rectangle(x: 0.0, y: 0.0, width: Float(windowWidth), height: Float(windowHeight))
-var dwarfs: [Dwarf] = []
+var dwarfs: [Dwarf] = generateDwarfs()
 
 while !WindowShouldClose() {
     if IsKeyReleased(Int32(raylib.KEY_SPACE.rawValue)) {
@@ -60,6 +76,7 @@ while !WindowShouldClose() {
         dwarfs = []
         runDwarf = false
         runLife = false
+        saveBoard(board: board, in: "labyrinth.txt")
     }
 
     if IsMouseButtonPressed(
