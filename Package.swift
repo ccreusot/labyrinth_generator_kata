@@ -16,12 +16,19 @@ let package = Package(
             name: "labyrinth_generator_lib",
             targets: ["labyrinth_generator_lib"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
+    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .executableTarget(
             name: "labyrinth_generator",
-            dependencies: ["labyrinth_generator_lib", "raylib"]),
+            dependencies: [
+                "labyrinth_generator_lib",
+                "raylib",
+                .product(name: "ArgumentParser", package: "swift-argument-parser")
+            ]),
         .target(
             name: "labyrinth_generator_lib"),
         .target(

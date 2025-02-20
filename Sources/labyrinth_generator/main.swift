@@ -1,13 +1,27 @@
+import ArgumentParser
 import Foundation
 import labyrinth_generator_lib
-import raylib
 
-let boardSide = 100
-let generator = LabyrinthGenerator()
-var board: [[Bool]] = generator.generateLabyrinth(size: boardSide)
+//import raylib
 
-saveBoard(board: board, in: "labyrinth.txt")
+@main
+struct LabyrinthGeneratorCommand: ParsableCommand {
+    @Option(help: "Give size of labyrinth")
+    public var size: Int
 
+    @Option(help: "Number of labyrinth you want to create")
+    public var number: Int = 1
+
+    public func run() throws {
+        let generator = LabyrinthGenerator()
+        for i in 0..<number {
+            let labyrinth = generator.generateLabyrinth(size: self.size)
+            saveBoard(board: labyrinth, in: "labyrinth_\(i + 1).txt")
+        }
+    }
+}
+
+/*
 func printBoard(_ board: [[Bool]]) {
     for y in 0..<board.count {
         for x in 0..<board[y].count {
@@ -185,3 +199,4 @@ while !WindowShouldClose() {
 }
 
 CloseWindow()
+*/
